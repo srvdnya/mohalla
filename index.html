@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mohalla — a neighbourhood board</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Cpath d='M17 3C10.9 3 6 7.8 6 13.7c0 8 11 17.3 11 17.3s11-9.3 11-17.3C28 7.8 23.1 3 17 3z' fill='%23F2A93B'/%3E%3Ccircle cx='12.6' cy='13.4' r='1.9' fill='%231B2430'/%3E%3Ccircle cx='17' cy='13.4' r='1.9' fill='%231B2430'/%3E%3Ccircle cx='21.4' cy='13.4' r='1.9' fill='%231B2430'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2430;
+    --paper:#EEF1F6;
+    --paper-light:#FFFFFF;
+    --paper-dark:#DCE1EA;
+    --border:#C7CEDB;
+    --amber:#F2A93B;
+    --teal:#1F7A6B;
+    --vermillion:#E14F3D;
+    --indigo:#4A55C9;
+    --plum:#8B4FA0;
+    --slate:#5B6472;
+    --critical:#A5281B;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Schibsted Grotesk',sans-serif; -webkit-font-smoothing:antialiased;}
+  h1,h2,h3,.display{font-family:'Bricolage Grotesque',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  a{color:inherit;}
+  button, .chip, .tag, input, select, textarea{font-family:inherit;}
+
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(238,241,246,0.92); backdrop-filter:blur(6px);
+    border-bottom:1.5px solid var(--ink);
+    padding:12px 24px; display:flex; align-items:center; justify-content:space-between; gap:16px;
+    transition:box-shadow .25s ease;
+  }
+  header.scrolled{box-shadow:0 6px 18px rgba(27,36,48,0.10);}
+  .logo{display:flex; align-items:center; gap:10px;}
+  .logo .word{line-height:1.1;}
+  .logo .word .title{font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:22px; letter-spacing:-0.01em;}
+  .header-actions{display:flex; align-items:center; gap:10px;}
+  .signin-btn{
+    font-weight:600; background:transparent; color:var(--ink); border:1.5px solid var(--ink);
+    padding:9px 16px; font-size:14px; cursor:pointer; border-radius:24px; transition:all .15s ease;
+  }
+  .signin-btn:hover{background:var(--paper-dark); transform:translateY(-1px);}
+  .btn-amber{font-weight:700; background:var(--amber); color:var(--ink); border:1.5px solid var(--amber); border-radius:24px; cursor:pointer; transition:all .15s ease;}
+  .btn-amber:hover{filter:brightness(0.94); transform:translateY(-1px); box-shadow:0 6px 16px rgba(242,169,59,0.35);}
+  .btn-amber:active{transform:translateY(0);}
+  .file-btn{padding:10px 18px; font-size:14px;}
+
+  .city-picker{position:relative; margin-left:2px;}
+  .city-btn{
+    font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.05em;
+    background:var(--paper-dark); color:var(--ink); border:1.5px solid var(--ink); border-radius:20px;
+    padding:6px 12px; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all .15s ease;
+  }
+  .city-btn:hover{background:var(--border);}
+  .city-btn .chev{font-size:9px; transition:transform .2s ease;}
+  .city-picker.open .chev{transform:rotate(180deg);}
+  .city-menu{
+    position:absolute; top:calc(100% + 8px); left:0; z-index:60;
+    background:var(--paper-light); border:1.5px solid var(--ink); border-radius:12px;
+    padding:6px; min-width:180px; box-shadow:0 8px 24px rgba(27,36,48,0.15);
+    opacity:0; visibility:hidden; transform:translateY(-6px);
+    transition:opacity .16s ease, transform .16s ease, visibility .16s ease;
+  }
+  .city-menu.open{opacity:1; visibility:visible; transform:translateY(0);}
+  .city-opt{
+    font-size:13.5px; padding:8px 10px; border-radius:8px;
+    display:flex; align-items:center; justify-content:space-between; gap:8px; transition:background .12s ease;
+  }
+  .city-opt:not(.disabled):hover{background:var(--paper-dark);}
+  .city-opt.active{font-weight:700; color:var(--teal);}
+  .city-opt.disabled{color:var(--slate); cursor:not-allowed;}
+  .city-opt .soon{
+    font-family:'JetBrains Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.04em;
+    background:var(--paper-dark); border-radius:10px; padding:2px 7px; color:var(--slate);
+  }
+  .city-note{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--slate); margin-top:16px;}
+
+  .hero{padding:60px 24px 36px; max-width:1080px; margin:0 auto; position:relative; z-index:1;}
+  .hero .eyebrow{
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--teal);
+    display:flex; align-items:center; gap:8px; margin-bottom:20px;
+  }
+  .hero .eyebrow::before{content:'';width:20px;height:2px;background:var(--teal);}
+  .hero h1{font-size:clamp(34px,6.4vw,64px); line-height:1.08; margin:0 0 20px; font-weight:700; max-width:16ch;}
+  .hero h1 .highlight{background:var(--amber); padding:0 10px; display:inline-block; transform:rotate(-1deg); box-decoration-break:clone; -webkit-box-decoration-break:clone;}
+  .hero p.sub{font-size:17.5px; line-height:1.6; max-width:58ch; color:#3d4552; margin:0 0 32px;}
+  .hero-ctas{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:46px;}
+  .btn-primary{padding:13px 24px; font-size:15px;}
+  .btn-ghost{font-weight:600; background:transparent; color:var(--ink); border:1.5px solid var(--ink); padding:13px 24px; font-size:15px; cursor:pointer; border-radius:24px; transition:all .15s ease;}
+  .btn-ghost:hover{background:var(--ink); color:var(--paper); transform:translateY(-1px);}
+
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border:1.5px solid var(--ink); border-radius:14px; overflow:hidden;}
+  .stats .cell{background:var(--paper-light); padding:18px 20px; transition:background .2s ease;}
+  .stats .cell:hover{background:var(--paper);}
+  .stats .cell .num{font-family:'JetBrains Mono',monospace; font-size:28px; font-weight:700; line-height:1;}
+  .stats .cell .lbl{font-family:'JetBrains Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--slate); margin-top:6px;}
+
+  .filters{max-width:1080px; margin:0 auto; padding:38px 24px 0; position:relative; z-index:1;}
+  .filters .row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; align-items:center;}
+  .filters .row .row-label{font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--slate); width:60px; flex-shrink:0;}
+  .chip{font-size:13.5px; font-weight:500; padding:8px 14px; border:1.5px solid var(--ink); border-radius:20px; background:transparent; cursor:pointer; white-space:nowrap; transition:all .15s ease;}
+  .chip:hover{background:var(--paper-dark); transform:translateY(-1px);}
+  .chip.active{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+  .sort-select{font-family:'JetBrains Mono',monospace; font-size:12px; text-transform:uppercase; padding:9px 12px; border:1.5px solid var(--ink); background:var(--paper-light); border-radius:20px; cursor:pointer; transition:background .15s ease;}
+  .sort-select:hover{background:var(--paper-dark);}
+  .search-input{font-size:13.5px; padding:9px 15px; border:1.5px solid var(--ink); background:var(--paper-light); border-radius:20px; flex:1; min-width:180px; max-width:320px; transition:box-shadow .15s ease;}
+  .search-input:focus{outline:none; box-shadow:0 0 0 3px rgba(74,85,201,0.18);}
+  .remember-lbl{display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--slate); cursor:pointer; text-transform:uppercase; letter-spacing:0.04em;}
+
+  .feed{max-width:1080px; margin:0 auto; padding:26px 24px 80px; position:relative; z-index:1;}
+  .feed-count{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--slate); margin-bottom:16px; text-transform:uppercase; letter-spacing:0.05em;}
+
+  @keyframes fadeInUp{ from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
+  .card{
+    background:var(--paper-light); border:1.5px solid var(--ink); border-left:5px solid var(--indigo); border-radius:12px;
+    padding:22px 22px 18px; margin-bottom:16px; position:relative;
+    animation:fadeInUp .45s ease both;
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .card:hover{transform:translateY(-3px); box-shadow:0 12px 28px rgba(27,36,48,0.09);}
+  .pin{position:absolute; top:-7px; left:20px; width:13px; height:13px; border-radius:50%; border:2px solid var(--paper-light); box-shadow:0 1px 3px rgba(0,0,0,0.25);}
+  .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;}
+  .card-meta{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:11px; align-items:center;}
+  .tag{font-family:'JetBrains Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em; padding:4px 9px; border:1px solid var(--ink); border-radius:20px; color:var(--ink);}
+  .tag.ward{background:var(--paper-dark);}
+  .tag.type{color:#fff; border-color:transparent; font-weight:700;}
+  .tag.when{border-color:var(--amber); color:#7a5310;}
+  .tag.trending{background:var(--amber); border-color:var(--amber); color:var(--ink); font-weight:700;}
+  .card h3{font-size:19.5px; margin:0 0 8px; font-weight:700; font-family:'Bricolage Grotesque',sans-serif;}
+  .card p.desc{font-size:14.5px; line-height:1.58; color:#3d4552; margin:0 0 12px;}
+  .card img.photo{width:100%; max-height:280px; object-fit:cover; border-radius:10px; border:1px solid var(--border); margin-bottom:12px; display:block;}
+  .video-wrap{position:relative; width:100%; aspect-ratio:16/9; border-radius:10px; overflow:hidden; border:1px solid var(--border); margin-bottom:12px; background:#000;}
+  .video-wrap iframe, .video-wrap video{width:100%; height:100%; border:0; display:block;}
+  .link-chip{
+    display:inline-flex; align-items:center; gap:5px; font-size:13px; font-weight:600; color:var(--teal);
+    text-decoration:none; border:1.5px solid var(--teal); border-radius:20px; padding:6px 12px; margin-bottom:12px; transition:all .15s ease;
+  }
+  .link-chip:hover{background:var(--teal); color:#fff;}
+  .card-foot{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;}
+  .stamp{font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding:5px 11px; border-radius:20px; display:inline-block; background:var(--paper-dark); color:var(--ink);}
+  .actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  @keyframes pulse{ 0%{transform:scale(1);} 40%{transform:scale(1.18);} 100%{transform:scale(1);} }
+  .upvote-btn{display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; background:transparent; border:1.5px solid var(--ink); border-radius:20px; padding:7px 13px; cursor:pointer; transition:all .15s ease;}
+  .upvote-btn:hover{background:var(--paper-dark);}
+  .upvote-btn.voted{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+  .upvote-btn.pulse{animation:pulse .32s ease;}
+  .link-btn{font-size:12.5px; font-weight:600; text-decoration:underline; background:none; border:none; cursor:pointer; color:var(--teal); padding:6px 4px; transition:opacity .15s ease;}
+  .link-btn:hover{opacity:0.7;}
+  .link-btn.muted{color:var(--slate);}
+  .status-cycle{font-size:11.5px; text-decoration:underline; background:none; border:none; cursor:pointer; color:var(--slate); padding:4px; transition:opacity .15s ease;}
+  .status-cycle:hover{opacity:0.7;}
+  .byline{font-family:'JetBrains Mono',monospace; font-size:11px; color:#8891a0; margin-top:2px;}
+
+  .comments{margin-top:14px; padding-top:14px; border-top:1px dashed var(--border);}
+  .comment{font-size:13.5px; padding:8px 0; border-bottom:1px solid #eef0f5; animation:fadeInUp .3s ease both;}
+  .comment:last-child{border-bottom:none;}
+  .comment .c-author{font-weight:700; margin-right:6px;}
+  .comment-form{display:flex; gap:8px; margin-top:10px;}
+  .comment-form input{flex:1; padding:9px 12px; border:1.5px solid var(--ink); border-radius:20px; font-size:13px; background:var(--paper); transition:box-shadow .15s ease;}
+  .comment-form input:focus{outline:none; box-shadow:0 0 0 3px rgba(74,85,201,0.18);}
+  .comment-form button{font-weight:700; font-size:12.5px; background:var(--ink); color:var(--paper); border:none; padding:0 16px; border-radius:20px; cursor:pointer; transition:all .15s ease;}
+  .comment-form button:hover{background:var(--indigo);}
+  .empty{text-align:center; padding:60px 20px; color:#8891a0; font-family:'JetBrains Mono',monospace; font-size:14px;}
+
+  .overlay{
+    position:fixed; inset:0; background:rgba(27,36,48,0.55); z-index:100;
+    display:flex; align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto;
+    opacity:0; visibility:hidden; transition:opacity .2s ease, visibility .2s ease;
+  }
+  .overlay.open{opacity:1; visibility:visible;}
+  .modal{
+    background:var(--paper-light); border:1.5px solid var(--ink); border-radius:18px; max-width:560px; width:100%; padding:28px 26px 26px; position:relative;
+    transform:translateY(14px) scale(.97); transition:transform .22s ease;
+  }
+  .overlay.open .modal{transform:translateY(0) scale(1);}
+  .modal.wide{max-width:640px;}
+  .modal.narrow{max-width:400px; text-align:center;}
+  .modal h2{font-size:25px; margin:0 0 4px; font-weight:700; font-family:'Bricolage Grotesque',sans-serif;}
+  .modal .modal-sub{font-size:13.5px; color:var(--slate); margin-bottom:20px;}
+  .modal-close{position:absolute; top:20px; right:22px; background:none; border:none; cursor:pointer; font-size:22px; line-height:1; color:var(--ink); transition:opacity .15s ease;}
+  .modal-close:hover{opacity:0.6;}
+  .type-row{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:20px;}
+  .type-opt{font-family:'JetBrains Mono',monospace; font-size:11.5px; text-transform:uppercase; letter-spacing:0.04em; padding:8px 12px; border:1.5px solid var(--ink); border-radius:20px; cursor:pointer; font-weight:700; transition:all .15s ease;}
+  .field{margin-bottom:16px; text-align:left;}
+  .field label{display:block; font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--slate); margin-bottom:6px;}
+  .field input, .field select, .field textarea{width:100%; padding:10px 13px; border:1.5px solid var(--ink); border-radius:12px; font-size:14px; background:var(--paper); transition:box-shadow .15s ease;}
+  .field input:focus, .field select:focus, .field textarea:focus{outline:none; box-shadow:0 0 0 3px rgba(74,85,201,0.18);}
+  .field textarea{resize:vertical; min-height:80px; border-radius:14px;}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .attach-section{border:1.5px dashed var(--border); border-radius:14px; padding:14px 16px 4px; margin-bottom:16px; background:var(--paper);}
+  .attach-head{font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--slate); margin-bottom:10px;}
+  .file-picker{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .file-input-hidden{display:none;}
+  .file-btn-small{font-weight:600; background:var(--paper-light); border:1.5px solid var(--ink); padding:8px 14px; border-radius:20px; cursor:pointer; font-size:13px; transition:all .15s ease;}
+  .file-btn-small:hover{background:var(--paper-dark); transform:translateY(-1px);}
+  .file-name{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--slate);}
+  .preview-thumb{max-width:180px; max-height:110px; border-radius:8px; border:1px solid var(--border); display:block; margin-top:8px; object-fit:cover;}
+  .video-badge{display:inline-flex; align-items:center; gap:7px; font-family:'JetBrains Mono',monospace; font-size:12px; background:var(--paper-dark); border:1px solid var(--border); border-radius:8px; padding:8px 12px; margin-top:8px;}
+  .remove-attach{margin-left:10px; font-size:11.5px; color:var(--vermillion); background:none; border:none; cursor:pointer; text-decoration:underline;}
+  .sev-row{display:flex; gap:8px;}
+  .sev-opt{flex:1; text-align:center; padding:9px 6px; border:1.5px solid var(--ink); border-radius:20px; font-family:'JetBrains Mono',monospace; font-size:11.5px; cursor:pointer; text-transform:uppercase; transition:all .15s ease;}
+  .sev-opt.active{background:var(--ink); color:var(--paper);}
+  .submit-btn{width:100%; margin-top:6px; padding:14px; font-size:15px;}
+  .form-note{font-family:'JetBrains Mono',monospace; font-size:11px; color:#8891a0; margin-top:10px; text-align:center;}
+  .hide{display:none !important;}
+
+  .google-btn{width:100%; display:flex; align-items:center; justify-content:center; gap:10px; background:var(--paper-light); border:1.5px solid var(--ink); border-radius:24px; padding:12px; font-weight:600; font-size:14.5px; cursor:pointer; color:var(--ink); margin-bottom:14px; transition:all .15s ease;}
+  .google-btn:hover{background:var(--paper-dark); transform:translateY(-1px);}
+  .divider{display:flex; align-items:center; gap:10px; margin:16px 0; color:var(--slate); font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase;}
+  .divider::before, .divider::after{content:''; flex:1; height:1px; background:var(--border);}
+  .stub-input{opacity:0.5; pointer-events:none;}
+
+  .page-body{text-align:left; font-size:14.5px; line-height:1.75; color:#3d4552; max-height:60vh; overflow-y:auto; padding-right:6px;}
+  .page-body h3{font-size:16px; margin:18px 0 8px; font-family:'Bricolage Grotesque',sans-serif;}
+  .page-body p{margin:0 0 12px;}
+  .page-body ul, .page-body ol{margin:0 0 14px; padding-left:20px;}
+  .page-body li{margin-bottom:8px;}
+  .page-note{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--slate); background:var(--paper); border:1px dashed var(--border); border-radius:10px; padding:10px 12px; margin-bottom:16px;}
+
+  footer{border-top:1.5px solid var(--ink); padding:40px 24px 30px; max-width:1080px; margin:0 auto; position:relative; z-index:1;}
+  .footer-grid{display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; gap:28px; margin-bottom:32px;}
+  .footer-blurb{font-size:13.5px; line-height:1.6; color:var(--slate); max-width:32ch; margin:0;}
+  .footer-head{font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink); margin-bottom:12px; font-weight:700;}
+  .footer-link{display:block; font-size:13.5px; color:var(--slate); text-decoration:none; margin-bottom:9px; width:fit-content; transition:color .15s ease;}
+  .footer-link:hover{color:var(--teal); text-decoration:underline;}
+  .footer-bottom{border-top:1px solid var(--border); padding-top:18px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--slate); line-height:1.7; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;}
+  @media(max-width:720px){ .footer-grid{grid-template-columns:1fr 1fr;} }
+
+  .toast{
+    position:fixed; left:50%; bottom:-100px; transform:translateX(-50%);
+    background:var(--ink); color:var(--paper); padding:12px 22px; border-radius:24px;
+    font-size:13px; font-weight:500; z-index:200; opacity:0;
+    transition:bottom .3s ease, opacity .3s ease; box-shadow:0 4px 20px rgba(0,0,0,0.25);
+  }
+  .toast.show{bottom:24px; opacity:1;}
+
+  @media(max-width:640px){
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .field-row{grid-template-columns:1fr;}
+    .filters .row .row-label{width:100%; margin-bottom:2px;}
+    .search-input{max-width:none;}
+  }
+</style>
+</head>
+<body>
+
+<header id="site-header">
+  <div class="logo">
+    <svg width="32" height="32" viewBox="0 0 34 34" fill="none">
+      <path d="M17 3C10.9 3 6 7.8 6 13.7c0 8 11 17.3 11 17.3s11-9.3 11-17.3C28 7.8 23.1 3 17 3z" fill="#F2A93B"/>
+      <circle cx="12.6" cy="13.4" r="1.9" fill="#1B2430"/>
+      <circle cx="17" cy="13.4" r="1.9" fill="#1B2430"/>
+      <circle cx="21.4" cy="13.4" r="1.9" fill="#1B2430"/>
+    </svg>
+    <div class="word"><div class="title">mohalla</div></div>
+    <div class="city-picker" id="city-picker">
+      <button class="city-btn" onclick="toggleCityMenu(event)">Mumbai <span class="chev">▾</span></button>
+      <div class="city-menu" id="city-menu">
+        <div class="city-opt active">Mumbai</div>
+        <div class="city-opt disabled">Delhi <span class="soon">Soon</span></div>
+        <div class="city-opt disabled">Bengaluru <span class="soon">Soon</span></div>
+        <div class="city-opt disabled">Pune <span class="soon">Soon</span></div>
+        <div class="city-opt disabled">Chennai <span class="soon">Soon</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="signin-btn" onclick="openAuthModal()">Sign in</button>
+    <button class="file-btn btn-amber" onclick="openModal()">+ Post to Mohalla</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="eyebrow">One board, every mohalla</div>
+  <h1>What's going on <span class="highlight">near you</span>?</h1>
+  <p class="sub">A pothole nobody's fixed. A gig this weekend. A train delay on your line. Someone asking if anyone's seen a lost dog near the lake. One board for everything happening around you — posted by the people actually living it.</p>
+  <div class="hero-ctas">
+    <button class="btn-primary btn-amber" onclick="openModal()">Post to Mohalla</button>
+    <button class="btn-ghost" onclick="document.getElementById('feed').scrollIntoView({behavior:'smooth'})">See the board</button>
+  </div>
+  <div class="stats" id="stats">
+    <div class="cell"><div class="num" id="stat-total">0</div><div class="lbl">Posts on the board</div></div>
+    <div class="cell"><div class="num" id="stat-open">0</div><div class="lbl">Still open</div></div>
+    <div class="cell"><div class="num" id="stat-events">0</div><div class="lbl">Events listed</div></div>
+    <div class="cell"><div class="num" id="stat-wards">0</div><div class="lbl">Wards active</div></div>
+  </div>
+  <div class="city-note">Mumbai only for now — other cities, and even more precise locality targeting within your area, are coming soon.</div>
+</section>
+
+<section class="filters" id="feed">
+  <div class="row">
+    <span class="row-label">Type</span>
+    <button class="chip active" data-type="all">All</button>
+    <button class="chip" data-type="Civic Issue">Civic Issue</button>
+    <button class="chip" data-type="Alert">Alert</button>
+    <button class="chip" data-type="Event">Event</button>
+    <button class="chip" data-type="Ask">Ask Mohalla</button>
+    <button class="chip" data-type="Transit">Transit</button>
+    <button class="chip" data-type="General">General</button>
+  </div>
+  <div class="row">
+    <span class="row-label">Ward</span>
+    <select class="sort-select" id="ward-filter" style="min-width:160px;">
+      <option value="all">All wards / areas</option>
+    </select>
+    <label class="remember-lbl"><input type="checkbox" id="remember-ward"> Remember my ward</label>
+    <input type="text" class="search-input" id="search-input" placeholder="Search posts...">
+    <select class="sort-select" id="sort-select" style="margin-left:auto;">
+      <option value="top">Most upvoted</option>
+      <option value="recent">Most recent</option>
+      <option value="open">Open first</option>
+    </select>
+  </div>
+</section>
+
+<section class="feed">
+  <div class="feed-count" id="feed-count">Loading the board…</div>
+  <div id="feed-list"></div>
+</section>
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-col">
+      <div class="logo" style="margin-bottom:12px;">
+        <svg width="26" height="26" viewBox="0 0 34 34" fill="none">
+          <path d="M17 3C10.9 3 6 7.8 6 13.7c0 8 11 17.3 11 17.3s11-9.3 11-17.3C28 7.8 23.1 3 17 3z" fill="#F2A93B"/>
+          <circle cx="12.6" cy="13.4" r="1.9" fill="#1B2430"/>
+          <circle cx="17" cy="13.4" r="1.9" fill="#1B2430"/>
+          <circle cx="21.4" cy="13.4" r="1.9" fill="#1B2430"/>
+        </svg>
+        <div class="word"><div class="title" style="font-size:18px;">mohalla</div></div>
+      </div>
+      <p class="footer-blurb">A community board run by neighbours, for neighbours. Other cities coming soon.</p>
+    </div>
+    <div class="footer-col">
+      <div class="footer-head">Explore</div>
+      <a href="#feed" class="footer-link">The board</a>
+      <a href="#" class="footer-link" onclick="return showPage('how')">How it works</a>
+      <a href="#" class="footer-link" onclick="return showPage('guidelines')">Community guidelines</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-head">Company</div>
+      <a href="#" class="footer-link" onclick="return showPage('about')">About</a>
+      <a href="#" class="footer-link" onclick="return showPage('contact')">Contact</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-head">Legal</div>
+      <a href="#" class="footer-link" onclick="return showPage('privacy')">Privacy policy</a>
+      <a href="#" class="footer-link" onclick="return showPage('terms')">Terms of service</a>
+      <a href="#" class="footer-link" onclick="return showPage('cookies')">Cookie policy</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Mohalla. Not a government service — for official grievances, use the BMC/MCGM portal or your ward office.</span>
+    <span>Made for neighbours, one mohalla at a time.</span>
+  </div>
+</footer>
+
+<!-- POST MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal wide">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <h2>Post to Mohalla</h2>
+    <div class="modal-sub">Pick what kind of post this is — the board sorts itself out from there.</div>
+
+    <div class="type-row" id="type-row">
+      <div class="type-opt" data-type="Civic Issue" style="background:#4A55C9;border-color:#4A55C9;">Civic Issue</div>
+      <div class="type-opt" data-type="Alert" style="background:#E14F3D;border-color:#E14F3D;">Alert</div>
+      <div class="type-opt" data-type="Event" style="background:#F2A93B;border-color:#F2A93B;">Event</div>
+      <div class="type-opt" data-type="Ask" style="background:#1F7A6B;border-color:#1F7A6B;">Ask Mohalla</div>
+      <div class="type-opt" data-type="Transit" style="background:#8B4FA0;border-color:#8B4FA0;">Transit</div>
+      <div class="type-opt" data-type="General" style="background:#5B6472;border-color:#5B6472;">General</div>
+    </div>
+
+    <div class="field">
+      <label>What's this about, in one line</label>
+      <input type="text" id="f-title" maxlength="90" placeholder="e.g. Free jazz set at Carter Road this Saturday">
+    </div>
+
+    <div class="field-row" id="civic-fields">
+      <div class="field">
+        <label>Category</label>
+        <select id="f-category">
+          <option>Roads &amp; Potholes</option>
+          <option>Garbage &amp; Sanitation</option>
+          <option>Illegal Hawking</option>
+          <option>Illegal Construction</option>
+          <option>Water &amp; Drainage</option>
+          <option>Street Lighting</option>
+          <option>Public Safety</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Severity</label>
+        <div class="sev-row" id="sev-row">
+          <div class="sev-opt" data-sev="Low">Low</div>
+          <div class="sev-opt active" data-sev="Medium">Medium</div>
+          <div class="sev-opt" data-sev="High">High</div>
+          <div class="sev-opt" data-sev="Critical">Critical</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field hide" id="event-field">
+      <label>When</label>
+      <input type="text" id="f-when" placeholder="e.g. Sat 18 July, 7:00 PM">
+    </div>
+
+    <div class="field">
+      <label>Ward / area</label>
+      <select id="f-ward"></select>
+    </div>
+
+    <div class="field">
+      <label>Details</label>
+      <textarea id="f-desc" placeholder="Give people what they'd actually need to know — exact location, timing, who it affects."></textarea>
+    </div>
+
+    <div class="attach-section">
+      <div class="attach-head">Attachments (optional)</div>
+      <div class="field">
+        <label>Photo or video</label>
+        <div class="file-picker">
+          <input type="file" id="f-media-file" accept="image/*,video/*" class="file-input-hidden" onchange="handleMediaSelect(event)">
+          <button type="button" class="file-btn-small" onclick="document.getElementById('f-media-file').click()">Add photo or video</button>
+          <span class="file-name" id="media-filename">No file chosen</span>
+        </div>
+        <div id="media-preview-wrap" class="hide">
+          <img id="photo-preview" class="preview-thumb hide" alt="">
+          <div id="video-badge" class="video-badge hide">🎥 Video attached — previews for this session</div>
+          <button type="button" class="remove-attach" onclick="clearMedia()">Remove</button>
+        </div>
+        <div class="form-note" style="text-align:left; margin-top:6px;">Photos save properly and stay on the board. Videos preview for this session only until the database's wired up.</div>
+      </div>
+      <div class="field">
+        <label>Related link</label>
+        <input type="text" id="f-link" placeholder="News article, ticket page, official notice, etc.">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Your name (optional — leave blank to post anonymously)</label>
+      <input type="text" id="f-author" maxlength="30" placeholder="Anonymous Neighbour">
+    </div>
+
+    <button class="submit-btn btn-amber" onclick="submitIssue()">Post to Mohalla</button>
+    <div class="form-note">Visible to everyone on this board. Photos are saved properly; videos preview for this session only until the database's wired up. Don't include phone numbers or personal details.</div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="overlay" id="auth-overlay">
+  <div class="modal narrow">
+    <button class="modal-close" onclick="closeAuthModal()">&times;</button>
+    <h2>Sign in to Mohalla</h2>
+    <div class="modal-sub">Post under your name and get updates for your ward.<br><strong>Not wired up yet</strong> — this is just the interface for now.</div>
+    <button class="google-btn" onclick="mockGoogleSignIn()">
+      <svg width="18" height="18" viewBox="0 0 18 18">
+        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.583-5.036-3.71H.957v2.332A8.997 8.997 0 009 18z"/>
+        <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/>
+        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.581C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.961L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+      </svg>
+      Continue with Google
+    </button>
+    <div class="divider">or</div>
+    <div class="field">
+      <input type="text" class="stub-input" placeholder="Email address (coming soon)">
+    </div>
+    <div class="form-note">You'll be able to switch this to email/phone sign-in later too.</div>
+  </div>
+</div>
+
+<!-- FOOTER CONTENT PAGE MODAL -->
+<div class="overlay" id="page-overlay">
+  <div class="modal wide">
+    <button class="modal-close" onclick="closePageOverlay()">&times;</button>
+    <h2 id="page-title">Title</h2>
+    <div class="page-body" id="page-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const WARDS = ["Colaba","Fort","Byculla","Mahim","Dadar","Parel","Lower Parel","Worli","Bandra","Khar","Santacruz","Vile Parle","Andheri","Juhu","Jogeshwari","Goregaon","Malad","Kandivali","Borivali","Powai","Ghatkopar","Kurla","Chembur","Vikhroli","Mulund","Thane","Navi Mumbai","Other"];
+
+const TYPES = {
+  'Civic Issue': {hex:'#4A55C9', statusOrder:['Reported','In Progress','Resolved']},
+  'Alert':       {hex:'#E14F3D', statusOrder:['Active','Update','Resolved']},
+  'Event':       {hex:'#F2A93B', statusOrder:null},
+  'Ask':         {hex:'#1F7A6B', statusOrder:['Open','Answered']},
+  'Transit':     {hex:'#8B4FA0', statusOrder:['Active','Update','Resolved']},
+  'General':     {hex:'#5B6472', statusOrder:null}
+};
+const SEV_COLOR = {Low:'#1F7A6B', Medium:'#F2A93B', High:'#E14F3D', Critical:'#A5281B'};
+
+const PAGES = {
+  about: {title:"About Mohalla", html:`
+    <p>Most of what actually affects your day — a blocked road, a gig this weekend, a train delay — never makes it anywhere neighbours can see it together. It scatters across WhatsApp groups, complaint apps nobody checks twice, and word of mouth that only reaches a few buildings.</p>
+    <p>Mohalla puts it on one board instead, organised by ward, so anyone nearby can see it, add to it, or act on it — whether that's a civic issue, an event, a question, or just something worth knowing.</p>
+    <p>We're starting in Mumbai. If it's useful here, more cities are next.</p>`},
+  how: {title:"How it works", html:`
+    <ol>
+      <li><strong>Pick a type.</strong> Civic Issue, Alert, Event, Ask Mohalla, Transit, or General — whatever fits.</li>
+      <li><strong>Tag your ward</strong> so it reaches the neighbours it's actually relevant to.</li>
+      <li><strong>Add a photo, video, or link</strong> if it helps explain things — not required, but it helps.</li>
+      <li><strong>The board does the rest.</strong> Neighbours upvote, comment, and help track it through to resolved.</li>
+    </ol>
+    <p>Posting works with or without an account. Signing in (coming soon) will just let you post under your name and follow your ward.</p>`},
+  guidelines: {title:"Community guidelines", html:`
+    <ul>
+      <li>Be specific — "pothole outside X station" helps a lot more than "roads are bad."</li>
+      <li>No phone numbers, addresses, or other personal details in public posts or comments.</li>
+      <li>Don't post something you haven't seen or verified yourself, especially under Alert.</li>
+      <li>Disagreements happen — keep comments about the issue, not the person.</li>
+      <li>This board isn't a substitute for emergency services. For anything urgent, contact the relevant authority directly.</li>
+    </ul>`},
+  contact: {title:"Contact", html:`
+    <p>For anything you'd rather not post publicly — feedback, a takedown request, a partnership idea — reach us at <strong>hello@mohalla.app</strong>.</p>
+    <p>We're a small team building this in the open, so replies might take a few days for now.</p>`},
+  privacy: {title:"Privacy policy", html:`
+    <div class="page-note">Placeholder text for the prototype — have this reviewed properly before you launch publicly.</div>
+    <p>We store what you post — title, description, ward, and any photos, videos, or links you attach — along with your upvotes and comments.</p>
+    <p>If you turn on "Remember my ward," we save that preference on this device so the board can pre-select it next time.</p>
+    <p>We don't sell this data. Posts are visible to everyone using the board, so please don't include anything private in them. Once sign-in is live, this policy will be updated to cover account data too.</p>`},
+  terms: {title:"Terms of service", html:`
+    <div class="page-note">Placeholder text for the prototype — have this reviewed properly before you launch publicly.</div>
+    <p>By posting on Mohalla, you're confirming the content is yours to share, that it isn't defamatory, illegal, or harmful, and that you'll follow the community guidelines.</p>
+    <p>Mohalla is a community bulletin board, not a government service — nothing posted here constitutes an official complaint or emergency response.</p>
+    <p>We may remove content that violates these terms.</p>`},
+  cookies: {title:"Cookie policy", html:`
+    <p>Mohalla doesn't use tracking or advertising cookies. The only thing saved on your device is an optional ward preference, stored so the board can remember it on your next visit — nothing more.</p>`}
+};
+
+const STORAGE_KEY = 'mohalla-mumbai-posts-v1';
+const PREF_KEY = 'mohalla-pref-ward';
+let posts = [];
+let activeType = 'all';
+let sessionVotes = {};
+let justVotedId = null;
+let selectedSeverity = 'Medium';
+let selectedFormType = 'Civic Issue';
+let selectedPhotoDataUrl = null;
+let selectedVideoBlobUrl = null;
+
+function compressImage(file, maxDim=1280, quality=0.72){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let w=img.width, h=img.height;
+        if(w>maxDim || h>maxDim){ const scale=maxDim/Math.max(w,h); w=Math.round(w*scale); h=Math.round(h*scale); }
+        const canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+function handleMediaSelect(e){
+  const file = e.target.files[0]; if(!file) return;
+  document.getElementById('media-filename').textContent = file.name;
+  document.getElementById('media-preview-wrap').classList.remove('hide');
+  if(file.type.startsWith('image/')){
+    selectedVideoBlobUrl = null;
+    compressImage(file).then(dataUrl=>{
+      selectedPhotoDataUrl = dataUrl;
+      document.getElementById('photo-preview').src = dataUrl;
+      document.getElementById('photo-preview').classList.remove('hide');
+      document.getElementById('video-badge').classList.add('hide');
+    }).catch(()=>{ showToast("Couldn't read that image"); });
+  }else if(file.type.startsWith('video/')){
+    selectedPhotoDataUrl = null;
+    if(selectedVideoBlobUrl) URL.revokeObjectURL(selectedVideoBlobUrl);
+    selectedVideoBlobUrl = URL.createObjectURL(file);
+    document.getElementById('photo-preview').classList.add('hide');
+    document.getElementById('video-badge').classList.remove('hide');
+  }else{
+    showToast("That file type isn't supported");
+  }
+}
+function clearMedia(){
+  selectedPhotoDataUrl = null;
+  if(selectedVideoBlobUrl) URL.revokeObjectURL(selectedVideoBlobUrl);
+  selectedVideoBlobUrl = null;
+  document.getElementById('f-media-file').value = '';
+  document.getElementById('media-filename').textContent = 'No file chosen';
+  document.getElementById('media-preview-wrap').classList.add('hide');
+  document.getElementById('photo-preview').classList.add('hide');
+  document.getElementById('video-badge').classList.add('hide');
+}
+
+const wardFilter = document.getElementById('ward-filter');
+const fWard = document.getElementById('f-ward');
+WARDS.forEach(w=>{
+  const o1=document.createElement('option'); o1.value=w; o1.textContent=w; wardFilter.appendChild(o1);
+  const o2=document.createElement('option'); o2.value=w; o2.textContent=w; fWard.appendChild(o2);
+});
+
+function seedPosts(){
+  const now = Date.now();
+  return [
+    {id:'s1', type:'Civic Issue', title:"Massive pothole outside station, two accidents this week", category:"Roads & Potholes", ward:"Andheri", severity:"Critical", desc:"West exit, right where the taxis queue. Two scooters have gone down here already. Needs barricading at minimum until it's filled.", author:"Anonymous Neighbour", status:"Reported", upvotes:67, ts: now-1000*60*60*24*1, comments:[{author:"Rider42",text:"Almost went down here yesterday too."}]},
+    {id:'s2', type:'Civic Issue', title:"Garbage not collected for over a week", category:"Garbage & Sanitation", ward:"Kurla", severity:"Critical", desc:"The collection point near the market has overflowed onto the road. Started to smell badly in the heat.", author:"Anonymous Neighbour", status:"In Progress", upvotes:51, ts: now-1000*60*60*24*3, comments:[]},
+    {id:'s3', type:'Alert', title:"Water supply shut Tuesday 10am–4pm for maintenance", ward:"Bandra", desc:"BMC notice on the society board — West side of Hill Road affected. Fill your tanks Monday night if you can.", author:"Bandra West Resident", status:"Active", upvotes:22, ts: now-1000*60*60*10, comments:[], link:"https://portal.mcgm.gov.in/"},
+    {id:'s4', type:'Event', title:"Free open-air jazz set at Carter Road", ward:"Bandra", when:"Sat 18 July, 7:00 PM", desc:"Local collective playing near the amphitheatre, no entry fee. Bring your own mat, it gets crowded fast.", author:"Anonymous Neighbour", upvotes:38, ts: now-1000*60*60*30, comments:[{author:"Music Fan",text:"Went last month, great crowd, get there by 6:30."}]},
+    {id:'s5', type:'Ask', title:"Anyone know a reliable, affordable electrician nearby?", ward:"Vile Parle", desc:"Need someone for a small wiring job, preferably available this week. Society regular guy is on leave.", author:"Anonymous Neighbour", status:"Open", upvotes:9, ts: now-1000*60*60*5, comments:[{author:"Parle Local",text:"Try the one near the market, does most of the buildings on our lane."}]},
+    {id:'s6', type:'Transit', title:"Harbour line delayed near Kurla–Chembur, signal failure", ward:"Kurla", desc:"Trains backed up since around 8:40am this morning. Adding at least 20-25 minutes if you're headed that way.", author:"Anonymous Neighbour", status:"Active", upvotes:44, ts: now-1000*60*60*2, comments:[]},
+    {id:'s7', type:'General', title:"Found a golden retriever near Powai lake, looking for the owner", ward:"Powai", desc:"Friendly, well-fed, has a collar but no tag. Currently with me near the promenade, please share if you know whose it might be.", author:"Anonymous Neighbour", upvotes:29, ts: now-1000*60*60*14, comments:[]}
+  ];
+}
+
+async function loadPosts(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, true);
+    posts = res ? JSON.parse(res.value) : seedPosts();
+    if(!res){ await window.storage.set(STORAGE_KEY, JSON.stringify(posts), true); }
+  }catch(e){
+    posts = seedPosts();
+    try{ await window.storage.set(STORAGE_KEY, JSON.stringify(posts), true); }catch(e2){}
+  }
+  render();
+}
+async function savePosts(){
+  try{
+    const sanitized = posts.map(p=>{
+      if(p.video && p.video.startsWith('blob:')){ const {video, ...rest} = p; return rest; }
+      return p;
+    });
+    await window.storage.set(STORAGE_KEY, JSON.stringify(sanitized), true);
+  }
+  catch(e){ showToast("Couldn't save — try again"); }
+}
+async function loadWardPref(){
+  try{
+    const res = await window.storage.get(PREF_KEY, false);
+    if(res && res.value){
+      wardFilter.value = res.value;
+      document.getElementById('remember-ward').checked = true;
+    }
+  }catch(e){ /* no pref saved yet */ }
+}
+
+function timeAgo(ts){
+  const diff = Date.now()-ts, mins = Math.floor(diff/60000);
+  if(mins<60) return mins+"m ago";
+  const hrs = Math.floor(mins/60);
+  if(hrs<24) return hrs+"h ago";
+  const days = Math.floor(hrs/24);
+  if(days<30) return days+"d ago";
+  return Math.floor(days/30)+"mo ago";
+}
+function isOpen(p){
+  const meta = TYPES[p.type];
+  if(!meta.statusOrder) return true;
+  return p.status !== meta.statusOrder[meta.statusOrder.length-1];
+}
+function isTrending(p){ return p.upvotes>=40 && (Date.now()-p.ts) < 1000*60*60*24*4; }
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; }
+
+function videoEmbedHtml(url){
+  if(!url) return '';
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+  if(yt) return `<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${yt[1]}" allowfullscreen></iframe></div>`;
+  const vim = url.match(/vimeo\.com\/(\d+)/);
+  if(vim) return `<div class="video-wrap"><iframe src="https://player.vimeo.com/video/${vim[1]}" allowfullscreen></iframe></div>`;
+  return `<div class="video-wrap"><video controls src="${escapeHtml(url)}"></video></div>`;
+}
+
+function animateNumber(el, to){
+  const start = performance.now(), duration = 650;
+  function step(now){
+    const p = Math.min((now-start)/duration,1);
+    const eased = 1-Math.pow(1-p,3);
+    el.textContent = Math.round(to*eased);
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function render(){ renderStats(); renderFeed(); }
+
+function renderStats(){
+  const total = posts.length;
+  const open = posts.filter(isOpen).length;
+  const events = posts.filter(p=>p.type==='Event').length;
+  const wardsSet = new Set(posts.map(p=>p.ward));
+  animateNumber(document.getElementById('stat-total'), total);
+  animateNumber(document.getElementById('stat-open'), open);
+  animateNumber(document.getElementById('stat-events'), events);
+  animateNumber(document.getElementById('stat-wards'), wardsSet.size);
+}
+
+function renderFeed(){
+  const wardVal = wardFilter.value;
+  const sortVal = document.getElementById('sort-select').value;
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  let list = posts.filter(p=>{
+    const typeOk = activeType==='all' || p.type===activeType;
+    const wardOk = wardVal==='all' || p.ward===wardVal;
+    const searchOk = !q || p.title.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q);
+    return typeOk && wardOk && searchOk;
+  });
+  if(sortVal==='top') list = list.slice().sort((a,b)=>b.upvotes-a.upvotes);
+  else if(sortVal==='recent') list = list.slice().sort((a,b)=>b.ts-a.ts);
+  else if(sortVal==='open') list = list.slice().sort((a,b)=>(isOpen(b)-isOpen(a)) || b.upvotes-a.upvotes);
+
+  document.getElementById('feed-count').textContent = list.length + (list.length===1?' post on the board':' posts on the board');
+
+  const container = document.getElementById('feed-list');
+  if(list.length===0){
+    container.innerHTML = '<div class="empty">Nothing here yet for this filter. Be the first to post.</div>';
+    return;
+  }
+  container.innerHTML = list.map((p, idx)=>{
+    const voted = sessionVotes[p.id];
+    const meta = TYPES[p.type];
+    const borderColor = p.type==='Civic Issue' ? SEV_COLOR[p.severity] : meta.hex;
+    const commentsHtml = p.comments.map(c=>`<div class="comment"><span class="c-author">${escapeHtml(c.author)}</span>${escapeHtml(c.text)}</div>`).join('');
+    const statusHtml = meta.statusOrder ? `<span class="stamp" style="color:${meta.hex};background:${meta.hex}1a;">${p.status}</span>` : '';
+    const cycleHtml = meta.statusOrder ? `<button class="status-cycle" onclick="cycleStatus('${p.id}')">cycle status →</button>` : '';
+    const photoHtml = p.photo ? `<img class="photo" src="${escapeHtml(p.photo)}" alt="" onerror="this.style.display='none'">` : '';
+    const videoHtml = p.video ? videoEmbedHtml(p.video) : '';
+    const linkHtml = p.link ? `<a class="link-chip" href="${escapeHtml(p.link)}" target="_blank" rel="noopener">View related link ↗</a><br>` : '';
+    const metaTags = `
+      <span class="tag ward">${escapeHtml(p.ward)}</span>
+      <span class="tag type" style="background:${meta.hex};">${p.type}</span>
+      ${p.type==='Civic Issue' ? `<span class="tag">${escapeHtml(p.category)}</span><span class="tag">${escapeHtml(p.severity)}</span>` : ''}
+      ${p.type==='Event' && p.when ? `<span class="tag when">${escapeHtml(p.when)}</span>` : ''}
+      ${isTrending(p) ? `<span class="tag trending">Trending</span>` : ''}
+    `;
+    return `
+    <div class="card" style="border-left-color:${borderColor}; animation-delay:${Math.min(idx*40,280)}ms;">
+      <span class="pin" style="background:${meta.hex};"></span>
+      <div class="card-top">
+        <div style="flex:1;min-width:220px;">
+          <div class="card-meta">${metaTags}</div>
+          <h3>${escapeHtml(p.title)}</h3>
+          ${photoHtml}
+          ${videoHtml}
+          <p class="desc">${escapeHtml(p.desc)}</p>
+          ${linkHtml}
+        </div>
+        ${statusHtml}
+      </div>
+      <div class="card-foot">
+        <div class="actions">
+          <button class="upvote-btn ${voted?'voted':''} ${justVotedId===p.id?'pulse':''}" onclick="toggleUpvote('${p.id}')">▲ ${p.upvotes}</button>
+          <button class="link-btn" onclick="toggleComments('${p.id}')">${p.comments.length} comment${p.comments.length===1?'':'s'}</button>
+          ${cycleHtml}
+          <button class="link-btn muted" onclick="reportPost('${p.id}')">Report</button>
+        </div>
+        <div class="byline">Posted by ${escapeHtml(p.author||'Anonymous Neighbour')} · ${timeAgo(p.ts)}</div>
+      </div>
+      <div class="comments" id="comments-${p.id}" style="display:none;">
+        ${commentsHtml || '<div class="comment" style="color:#a7aebb;">No comments yet.</div>'}
+        <div class="comment-form">
+          <input type="text" id="ci-${p.id}" placeholder="Add a comment or update...">
+          <button onclick="addComment('${p.id}')">Post</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  if(justVotedId){ setTimeout(()=>{ justVotedId=null; }, 350); }
+}
+
+async function toggleUpvote(id){
+  const p = posts.find(x=>x.id===id); if(!p) return;
+  if(sessionVotes[id]){ p.upvotes--; sessionVotes[id]=false; } else { p.upvotes++; sessionVotes[id]=true; justVotedId=id; }
+  render(); await savePosts();
+}
+function toggleComments(id){
+  const el = document.getElementById('comments-'+id);
+  el.style.display = el.style.display==='none' ? 'block' : 'none';
+}
+async function addComment(id){
+  const input = document.getElementById('ci-'+id);
+  const text = input.value.trim(); if(!text) return;
+  const p = posts.find(x=>x.id===id);
+  p.comments.push({author:'Anonymous Neighbour', text});
+  input.value='';
+  render();
+  document.getElementById('comments-'+id).style.display='block';
+  await savePosts();
+  showToast('Comment posted');
+}
+async function cycleStatus(id){
+  const p = posts.find(x=>x.id===id);
+  const order = TYPES[p.type].statusOrder;
+  const idx = order.indexOf(p.status);
+  p.status = order[(idx+1)%order.length];
+  render(); await savePosts();
+}
+function reportPost(id){ showToast("Thanks — flagged for review"); }
+
+document.querySelectorAll('.chip[data-type]').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('.chip[data-type]').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    activeType = chip.dataset.type;
+    renderFeed();
+  });
+});
+wardFilter.addEventListener('change', async ()=>{
+  renderFeed();
+  if(document.getElementById('remember-ward').checked){
+    try{ await window.storage.set(PREF_KEY, wardFilter.value, false); }catch(e){}
+  }
+});
+document.getElementById('remember-ward').addEventListener('change', async (e)=>{
+  try{
+    if(e.target.checked){ await window.storage.set(PREF_KEY, wardFilter.value, false); showToast('Will remember this ward on this device'); }
+    else{ await window.storage.delete(PREF_KEY, false); }
+  }catch(err){}
+});
+document.getElementById('sort-select').addEventListener('change', renderFeed);
+document.getElementById('search-input').addEventListener('input', renderFeed);
+
+document.querySelectorAll('.sev-opt').forEach(opt=>{
+  opt.addEventListener('click', ()=>{
+    document.querySelectorAll('.sev-opt').forEach(o=>o.classList.remove('active'));
+    opt.classList.add('active');
+    selectedSeverity = opt.dataset.sev;
+  });
+});
+
+document.querySelectorAll('.type-opt').forEach(opt=>{
+  opt.addEventListener('click', ()=>{
+    document.querySelectorAll('.type-opt').forEach(o=>{o.classList.remove('active'); o.style.color='var(--ink)'; o.style.opacity='0.55';});
+    opt.classList.add('active'); opt.style.color='#fff'; opt.style.opacity='1';
+    selectedFormType = opt.dataset.type;
+    document.getElementById('civic-fields').classList.toggle('hide', selectedFormType!=='Civic Issue');
+    document.getElementById('event-field').classList.toggle('hide', selectedFormType!=='Event');
+  });
+});
+document.querySelectorAll('.type-opt').forEach(o=>{ o.style.opacity = o.dataset.type==='Civic Issue' ? '1' : '0.55'; o.style.color = o.dataset.type==='Civic Issue' ? '#fff' : 'var(--ink)'; });
+document.querySelector('.type-opt[data-type="Civic Issue"]').classList.add('active');
+
+function openModal(){ document.getElementById('overlay').classList.add('open'); }
+function closeModal(){ document.getElementById('overlay').classList.remove('open'); }
+document.getElementById('overlay').addEventListener('click', e=>{ if(e.target.id==='overlay') closeModal(); });
+
+function openAuthModal(){ document.getElementById('auth-overlay').classList.add('open'); }
+function closeAuthModal(){ document.getElementById('auth-overlay').classList.remove('open'); }
+document.getElementById('auth-overlay').addEventListener('click', e=>{ if(e.target.id==='auth-overlay') closeAuthModal(); });
+function mockGoogleSignIn(){ closeAuthModal(); showToast("Google sign-in isn't wired up yet — hang tight"); }
+
+function showPage(key){
+  const p = PAGES[key];
+  document.getElementById('page-title').textContent = p.title;
+  document.getElementById('page-body').innerHTML = p.html;
+  document.getElementById('page-overlay').classList.add('open');
+  return false;
+}
+function closePageOverlay(){ document.getElementById('page-overlay').classList.remove('open'); }
+document.getElementById('page-overlay').addEventListener('click', e=>{ if(e.target.id==='page-overlay') closePageOverlay(); });
+
+function toggleCityMenu(e){
+  e.stopPropagation();
+  document.getElementById('city-menu').classList.toggle('open');
+  document.getElementById('city-picker').classList.toggle('open');
+}
+document.addEventListener('click', ()=>{
+  document.getElementById('city-menu').classList.remove('open');
+  document.getElementById('city-picker').classList.remove('open');
+});
+
+window.addEventListener('scroll', ()=>{
+  document.getElementById('site-header').classList.toggle('scrolled', window.scrollY>8);
+});
+
+async function submitIssue(){
+  const title = document.getElementById('f-title').value.trim();
+  const desc = document.getElementById('f-desc').value.trim();
+  const ward = document.getElementById('f-ward').value;
+  const author = document.getElementById('f-author').value.trim();
+  const category = document.getElementById('f-category').value;
+  const when = document.getElementById('f-when').value.trim();
+  const link = document.getElementById('f-link').value.trim();
+
+  if(!title){ showToast("Add a one-line title first"); return; }
+  if(!desc){ showToast("Add a few details"); return; }
+
+  const meta = TYPES[selectedFormType];
+  const post = {
+    id: 'p'+Date.now()+Math.floor(Math.random()*1000),
+    type: selectedFormType, title, ward, desc,
+    author: author || 'Anonymous Neighbour',
+    upvotes: 1, ts: Date.now(), comments: [],
+    status: meta.statusOrder ? meta.statusOrder[0] : undefined
+  };
+  if(selectedFormType==='Civic Issue'){ post.category = category; post.severity = selectedSeverity; }
+  if(selectedFormType==='Event'){ post.when = when; }
+  if(selectedPhotoDataUrl){ post.photo = selectedPhotoDataUrl; }
+  if(selectedVideoBlobUrl){ post.video = selectedVideoBlobUrl; }
+  if(link){ post.link = link; }
+
+  sessionVotes[post.id] = true;
+  posts.unshift(post);
+  closeModal();
+  document.getElementById('f-title').value='';
+  document.getElementById('f-desc').value='';
+  document.getElementById('f-author').value='';
+  document.getElementById('f-when').value='';
+  document.getElementById('f-link').value='';
+  clearMedia();
+  render();
+  await savePosts();
+  showToast('Posted — visible to everyone on the board');
+  document.getElementById('feed').scrollIntoView({behavior:'smooth'});
+}
+
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+loadWardPref().then(loadPosts);
+</script>
+</body>
+</html>

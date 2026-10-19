@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented here.
 
+## [Unreleased] — Multi-page community prototype
+- Added device-local demo comments, save-post controls, and report/flag interactions with explicit prototype limitations
+- Added an open-first feed sort option
+- Fixed multi-page city selection and interaction selectors; JavaScript syntax validated
+- Reworked the single-page feed into a dedicated homepage and separate neighbourhood feed, explore, events, alerts, about, guidelines and privacy pages
+- Added a shared responsive design system, mobile navigation, consistent header/footer and accessible focus states
+- Added searchable/filterable sample feed, area discovery, sample events/alerts and a local-only demo post flow
+- Made prototype-only and non-verified sample-data limitations explicit in the interface and documentation
+- Deferred sign-in and account creation as requested
+
+## Previous city-aware prototype
+- Removed the Mumbai-only city switcher in favour of manual city selection and permission-based current-city detection
+- Added city-scoped feeds and dynamic area filtering
+- Added a local profile prototype with name, bio, hometown, current city, and opt-in current-city display
+- Kept current-city sharing off by default and limited the profile location display to a city name
+- Updated copy and privacy notes to reflect the city-agnostic direction
+- Replaced the mono/typewriter styling with a single readable sans-serif font throughout
+- Reduced heavy borders, uppercase labels, decorative pins, and hover motion for a calmer interface
+- Improved spacing, form controls, cards, mobile layout, and keyboard focus visibility
+
 ## [0.1.0] — Initial prototype
 - Six post types (Civic Issue, Alert, Event, Ask Mohalla, Transit, General) with type-specific status flows
 - Ward-based filtering, search, and sorting

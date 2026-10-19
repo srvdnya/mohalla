@@ -2,71 +2,70 @@
 
 A city-aware neighbourhood board for civic issues, alerts, events, questions, and everyday local goings-on — organised by city and area, posted by the people living it.
 
-Designed to work in any city. The current version is a single-file static prototype; no production backend yet.
+## Current prototype
 
-## What it does
+The site is now a multi-page static front-end built with plain HTML, CSS and vanilla JavaScript. The homepage introduces Mohalla; the community board, neighbourhood explorer, events, alerts, about, community guidelines and privacy overview each have their own page.
 
-Mohalla is a community bulletin board with six post types, each with its own colour and status flow:
+### Pages
+- `index.html` — homepage and product introduction
+- `feed.html` — searchable/filterable neighbourhood board
+- `explore.html` — area discovery and manual city selection
+- `events.html` — sample local event listings
+- `alerts.html` — sample community alerts
+- `about.html` — product overview and roadmap
+- `guidelines.html` — intended community standards
+- `privacy.html` — prototype data-handling overview
 
-| Type | Use case | Status flow |
-|---|---|---|
-| **Civic Issue** | Potholes, garbage, illegal hawking/construction, water, lighting, safety | Reported → In Progress → Resolved |
-| **Alert** | Something happened — water cuts, closures, incidents | Active → Update → Resolved |
-| **Event** | Gigs, meetups, local happenings | — (shows a date/time instead) |
-| **Ask Mohalla** | Questions to neighbours | Open → Answered |
-| **Transit** | Train/road delays and disruptions | Active → Update → Resolved |
-| **General** | Lost pets, shoutouts, anything else | — |
+Shared UI and demo behaviour live in `assets/site.css` and `assets/site.js`.
 
-Also included:
-- City selection with browser location detection (permission-based) and manual city fallback
-- City-scoped feeds, dynamic area filtering, search, and sorting (top / recent / open-first)
-- Local profile prototype with name, bio, hometown, current city, and opt-in current-city display
-- Current-city display is off by default; only the city name is shown, never coordinates or a precise address
-- Upvoting and threaded comments per post
-- Photo and video attachments (photos are compressed client-side; videos preview for the current session only — see [Known limitations](#known-limitations))
-- A "Sign in with Google" interface (UI only — not yet wired to real auth)
-- A city switcher that supports detected or manually selected cities
-- Full footer with About / How it works / Community guidelines / Contact / Privacy / Terms / Cookie pages
+## Prototype behaviour
+
+- City selection is manual in this multi-page preview.
+- The sample feed includes illustrative civic issues, alerts, events, transit updates, questions and general posts.
+- Users can search and filter the sample feed.
+- Creating a post stores it in the current browser's local storage only. It is not shared with other visitors or devices.
+- Sample posts, people, counts and event details are illustrative and must be removed or replaced with verified content before a public launch.
+- Sign-in and account creation are intentionally deferred. The current sign-in button explains that authentication is not yet available.
+
+## Production readiness status
+
+**This is a more complete front-end prototype, not yet a production-ready community service.** Do not present demo alerts as live information or use this prototype for urgent safety notices.
+
+Before launch, implement and test:
+- Secure authentication and account recovery
+- A shared backend/database with validation, access rules, backups and migrations
+- Server-side authorization for creating posts, votes, comments and status changes
+- Moderation/report review, spam prevention, rate limits and abuse handling
+- Verified alert workflows and clear source attribution
+- Privacy policy and terms reviewed for the actual product, data retention/deletion controls, and consent for any location features
+- Accessible interaction testing, responsive/browser QA, monitoring and deployment checks
+- Replace or remove all illustrative content and mark unverified information clearly
+
+The prototype deliberately does not request precise GPS location. City selection is manual and stored locally.
 
 ## Tech stack
 
-Plain HTML, CSS, and vanilla JavaScript — no build step, no framework, no dependencies beyond Google Fonts (Schibsted Grotesk for a consistent, readable sans-serif interface.
+- HTML5
+- CSS with responsive layouts and reduced-motion support
+- Vanilla JavaScript
+- Browser local storage for demo-only data
+- Google Fonts: Schibsted Grotesk
 
-Posts currently persist through the [Claude artifact storage API](https://docs.claude.com), which only works inside the Claude.ai preview. **This is the main thing to swap out before this works as a real live board** — see below.
-
-## Known limitations
-
-This is a working prototype, not a production app yet:
-
-- **No real backend.** Posts are stored via Claude's in-preview storage. Once deployed elsewhere (e.g. Vercel), posting won't persist for real users until it's connected to an actual database. Profile and city preferences currently use browser-local storage.
-- **No auth.** The Google sign-in button is interface-only. Anyone can post, upvote repeatedly on refresh, or cycle a post's status.
-- **No moderation.** The "Report" button is a stub — it doesn't do anything yet.
-- **Videos don't persist.** They preview only for the current browser session (no storage layer for large files yet).
-- **Legal pages are placeholders.** Privacy Policy and Terms of Service are generic starter text, not reviewed — replace before any real launch.
-
-## Roadmap
-
-- [ ] Real backend (Firebase looks like the natural fit) for posts, comments, and votes
-- [ ] Wire up Google sign-in
-- [ ] Persistent video/file uploads
-- [ ] Basic moderation for reported posts
-- [x] City-agnostic prototype with manual city selection and optional location detection
-- [x] Local profile prototype with opt-in current-city display
-- [ ] Replace prototype storage with a real backend and city-aware data model
-- [ ] Add area-level relevance and nearby discovery using coarse location only
+No build step or framework is required.
 
 ## Local development
 
-No build step — just open `index.html` in a browser. For a closer-to-production feel, serve it locally instead of opening the file directly:
+Serve the repository root rather than opening the files directly:
 
 ```bash
 python3 -m http.server 8000
-# then visit http://localhost:8000
 ```
+
+Then visit `http://localhost:8000`.
 
 ## Deployment
 
-Currently deployed via GitHub → Vercel. Push to `main` and Vercel redeploys automatically.
+The repository is connected to Vercel. The feature branch `feat/location-aware-community` creates preview deployments; changes become production only after merging into the configured production branch (`main`).
 
 ## License
 

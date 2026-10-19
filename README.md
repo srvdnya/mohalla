@@ -67,6 +67,17 @@ Then visit `http://localhost:8000`.
 
 The repository is connected to Vercel. The feature branch `feat/location-aware-community` creates preview deployments; changes become production only after merging into the configured production branch (`main`).
 
+
+## Location, media and detail-page work in progress
+
+- Optional browser geolocation can reverse-resolve a city and neighbourhood after the visitor explicitly taps the location control. Manual city and neighbourhood search remain available.
+- Area suggestions are based on the demo neighbourhood list and sample post locations; these are not a live places database.
+- Dedicated `area.html` and `detail.html` pages give neighbourhoods, events and community posts their own detail views.
+- The post composer supports a local preview of up to six images and one video, with remove controls and an image/video gallery in the current browser session.
+- Event posts can capture a date, start time, venue/meeting point, cost and optional registration URL.
+- Browser geolocation and reverse geocoding need HTTPS and permission. The demo reverse-geocodes through OpenStreetMap Nominatim; before a production launch, review its usage policy and use a suitable geocoding provider/service.
+- Media files are previewed with temporary browser object URLs. Only file metadata is saved in demo post records, not the actual file bytes. Uploaded media will not persist across reloads or be shared until a secure object-storage/backend integration is implemented.
+
 ## License
 
 Not yet decided — treat as all rights reserved for now unless a LICENSE file is added.

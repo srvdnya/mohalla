@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented here.
 
+## [Unreleased] — City-aware community prototype
+- Removed the Mumbai-only city switcher in favour of manual city selection and permission-based current-city detection
+- Added city-scoped feeds and dynamic area filtering
+- Added a local profile prototype with name, bio, hometown, current city, and opt-in current-city display
+- Kept current-city sharing off by default and limited the profile location display to a city name
+- Updated copy and privacy notes to reflect the city-agnostic direction
+
 ## [0.1.0] — Initial prototype
 - Six post types (Civic Issue, Alert, Event, Ask Mohalla, Transit, General) with type-specific status flows
 - Ward-based filtering, search, and sorting

@@ -8,6 +8,9 @@ All notable changes to this project will be documented here.
 - Added a local profile prototype with name, bio, hometown, current city, and opt-in current-city display
 - Kept current-city sharing off by default and limited the profile location display to a city name
 - Updated copy and privacy notes to reflect the city-agnostic direction
+- Replaced the mono/typewriter styling with a single readable sans-serif font throughout
+- Reduced heavy borders, uppercase labels, decorative pins, and hover motion for a calmer interface
+- Improved spacing, form controls, cards, mobile layout, and keyboard focus visibility
 
 ## [0.1.0] — Initial prototype
 - Six post types (Civic Issue, Alert, Event, Ask Mohalla, Transit, General) with type-specific status flows

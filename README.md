@@ -30,7 +30,7 @@ Also included:
 
 ## Tech stack
 
-Plain HTML, CSS, and vanilla JavaScript — no build step, no framework, no dependencies beyond Google Fonts (Bricolage Grotesque, Schibsted Grotesk, JetBrains Mono).
+Plain HTML, CSS, and vanilla JavaScript — no build step, no framework, no dependencies beyond Google Fonts (Schibsted Grotesk for a consistent, readable sans-serif interface.
 
 Posts currently persist through the [Claude artifact storage API](https://docs.claude.com), which only works inside the Claude.ai preview. **This is the main thing to swap out before this works as a real live board** — see below.
 

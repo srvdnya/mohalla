@@ -1,8 +1,8 @@
 # Mohalla
 
-A neighbourhood board for Mumbai. One place for civic issues, alerts, events, questions, and everyday local goings-on — organised by ward, posted by the people living it.
+A city-aware neighbourhood board for civic issues, alerts, events, questions, and everyday local goings-on — organised by city and area, posted by the people living it.
 
-Starting in Mumbai. Built as a single-file static prototype; no backend yet.
+Designed to work in any city. The current version is a single-file static prototype; no production backend yet.
 
 ## What it does
 
@@ -18,11 +18,14 @@ Mohalla is a community bulletin board with six post types, each with its own col
 | **General** | Lost pets, shoutouts, anything else | — |
 
 Also included:
-- Ward-based filtering, search, and sorting (top / recent / open-first)
+- City selection with browser location detection (permission-based) and manual city fallback
+- City-scoped feeds, dynamic area filtering, search, and sorting (top / recent / open-first)
+- Local profile prototype with name, bio, hometown, current city, and opt-in current-city display
+- Current-city display is off by default; only the city name is shown, never coordinates or a precise address
 - Upvoting and threaded comments per post
 - Photo and video attachments (photos are compressed client-side; videos preview for the current session only — see [Known limitations](#known-limitations))
 - A "Sign in with Google" interface (UI only — not yet wired to real auth)
-- A city switcher showing Mumbai active, other cities marked "Soon"
+- A city switcher that supports detected or manually selected cities
 - Full footer with About / How it works / Community guidelines / Contact / Privacy / Terms / Cookie pages
 
 ## Tech stack
@@ -35,7 +38,7 @@ Posts currently persist through the [Claude artifact storage API](https://docs.c
 
 This is a working prototype, not a production app yet:
 
-- **No real backend.** Posts are stored via Claude's in-preview storage. Once deployed elsewhere (e.g. Vercel), posting won't persist for real users until it's connected to an actual database.
+- **No real backend.** Posts are stored via Claude's in-preview storage. Once deployed elsewhere (e.g. Vercel), posting won't persist for real users until it's connected to an actual database. Profile and city preferences currently use browser-local storage.
 - **No auth.** The Google sign-in button is interface-only. Anyone can post, upvote repeatedly on refresh, or cycle a post's status.
 - **No moderation.** The "Report" button is a stub — it doesn't do anything yet.
 - **Videos don't persist.** They preview only for the current browser session (no storage layer for large files yet).
@@ -47,7 +50,10 @@ This is a working prototype, not a production app yet:
 - [ ] Wire up Google sign-in
 - [ ] Persistent video/file uploads
 - [ ] Basic moderation for reported posts
-- [ ] Expand beyond Mumbai
+- [x] City-agnostic prototype with manual city selection and optional location detection
+- [x] Local profile prototype with opt-in current-city display
+- [ ] Replace prototype storage with a real backend and city-aware data model
+- [ ] Add area-level relevance and nearby discovery using coarse location only
 
 ## Local development
 

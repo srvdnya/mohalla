@@ -326,7 +326,7 @@
     <select class="sort-select" id="ward-filter" style="min-width:160px;">
       <option value="all">All wards / areas</option>
     </select>
-    <label class="remember-lbl"><input type="checkbox" id="remember-ward"> Remember my ward</label>
+    <label class="remember-lbl"><input type="checkbox" id="remember-ward"> Remember this area</label>
     <input type="text" class="search-input" id="search-input" placeholder="Search posts...">
     <select class="sort-select" id="sort-select" style="margin-left:auto;">
       <option value="top">Most upvoted</option>
@@ -353,7 +353,7 @@
         </svg>
         <div class="word"><div class="title" style="font-size:18px;">mohalla</div></div>
       </div>
-      <p class="footer-blurb">A community board run by neighbours, for neighbours. Other cities coming soon.</p>
+      <p class="footer-blurb">A community board run by neighbours, for neighbours — wherever they live.</p>
     </div>
     <div class="footer-col">
       <div class="footer-head">Explore</div>
@@ -508,7 +508,7 @@
     <div class="field"><label>Name</label><input id="profile-name" maxlength="50" placeholder="What should neighbours call you?"></div>
     <div class="field"><label>Bio (optional)</label><textarea id="profile-bio" maxlength="240" placeholder="A little about you or what you're into…" style="min-height:72px;"></textarea></div>
     <div class="field"><label>Hometown (optional)</label><input id="profile-hometown" maxlength="80" placeholder="Where are you from?"></div>
-    <div class="field"><label>Current city</label><input id="profile-current-city" maxlength="80" placeholder="Use “Use my current city” above to detect it" readonly></div>
+    <div class="field"><label>Current city</label><input id="profile-current-city" maxlength="80" placeholder="Detected automatically; you can edit this" ></div>
     <label class="privacy-toggle"><input id="profile-share-city" type="checkbox"><span><strong>Show my current city on my profile</strong><br>Only the city name will be shown — never your address, coordinates, or live location. This is optional and off by default.</span></label>
     <button class="submit-btn btn-amber" onclick="saveProfile()">Save profile</button>
     <div class="form-note">Prototype only: this profile is saved on this device. Sign-in and cross-device profiles will be connected later.</div>
@@ -542,8 +542,8 @@ const SEV_COLOR = {Low:'#1F7A6B', Medium:'#F2A93B', High:'#E14F3D', Critical:'#A
 const PAGES = {
   about: {title:"About Mohalla", html:`
     <p>Most of what actually affects your day — a blocked road, a gig this weekend, a train delay — never makes it anywhere neighbours can see it together. It scatters across WhatsApp groups, complaint apps nobody checks twice, and word of mouth that only reaches a few buildings.</p>
-    <p>Mohalla puts it on one board instead, organised by ward, so anyone nearby can see it, add to it, or act on it — whether that's a civic issue, an event, a question, or just something worth knowing.</p>
-    <p>We're starting in Mumbai. If it's useful here, more cities are next.</p>`},
+    <p>Mohalla puts it on one board instead, organised by city and area, so neighbours can see it, add to it, or act on it — whether that's a civic issue, an event, a question, or just something worth knowing.</p>
+    <p>Mohalla is designed for every city. Choose your city or let your browser help identify it, then explore the community board for that place.</p>`},
   how: {title:"How it works", html:`
     <ol>
       <li><strong>Pick a type.</strong> Civic Issue, Alert, Event, Ask Mohalla, Transit, or General — whatever fits.</li>
@@ -551,7 +551,7 @@ const PAGES = {
       <li><strong>Add a photo, video, or link</strong> if it helps explain things — not required, but it helps.</li>
       <li><strong>The board does the rest.</strong> Neighbours upvote, comment, and help track it through to resolved.</li>
     </ol>
-    <p>Posting works with or without an account. Signing in (coming soon) will just let you post under your name and follow your ward.</p>`},
+    <p>For now, profiles and city preferences are a local prototype. Sign-in, shared profiles, and a real backend will be added later.</p>`},
   guidelines: {title:"Community guidelines", html:`
     <ul>
       <li>Be specific — "pothole outside X station" helps a lot more than "roads are bad."</li>
@@ -565,12 +565,12 @@ const PAGES = {
     <p>We're a small team building this in the open, so replies might take a few days for now.</p>`},
   privacy: {title:"Privacy policy", html:`
     <div class="page-note">Placeholder text for the prototype — have this reviewed properly before you launch publicly.</div>
-    <p>We store what you post — title, description, ward, and any photos, videos, or links you attach — along with your upvotes and comments.</p>
+    <p>We store what you post — title, description, city, area, and any photos, videos, or links you attach — along with your upvotes and comments. In this prototype, profile and city preferences are saved only on your device.</p>
     <p>If you turn on "Remember my ward," we save that preference on this device so the board can pre-select it next time.</p>
     <p>We don't sell this data. Posts are visible to everyone using the board, so please don't include anything private in them. Once sign-in is live, this policy will be updated to cover account data too.</p>`},
   terms: {title:"Terms of service", html:`
     <div class="page-note">Placeholder text for the prototype — have this reviewed properly before you launch publicly.</div>
-    <p>By posting on Mohalla, you're confirming the content is yours to share, that it isn't defamatory, illegal, or harmful, and that you'll follow the community guidelines.</p>
+    <p>By posting on Mohalla, you're confirming the content is yours to share, that it isn't defamatory, illegal, or harmful, and that you'll follow the community guidelines. Choose the city and area relevant to the post, and avoid publishing personal or precise location details.</p>
     <p>Mohalla is a community bulletin board, not a government service — nothing posted here constitutes an official complaint or emergency response.</p>
     <p>We may remove content that violates these terms.</p>`},
   cookies: {title:"Cookie policy", html:`

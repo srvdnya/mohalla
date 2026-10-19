@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented here.
 
+## [Unreleased] — Location-aware discovery and rich community posts
+- Added optional, user-triggered browser location detection with city and neighbourhood reverse geocoding
+- Added neighbourhood autocomplete/search, area-specific filtering, dedicated area detail pages and area selection
+- Added image carousel and video file selection with in-browser previews and remove controls in the post composer
+- Added media previews to feed cards during the current browser session
+- Added event-specific date, start time, venue, cost and optional registration link fields
+- Made event cards open a dedicated event detail view with key event information
+- Added explicit preview limitations for temporary media URLs and local-only demo data
+
 ## [Unreleased] — Multi-page community prototype
 - Added device-local demo comments, save-post controls, and report/flag interactions with explicit prototype limitations
 - Added an open-first feed sort option

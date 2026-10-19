@@ -3,6 +3,9 @@
 All notable changes to this project will be documented here.
 
 ## [Unreleased] — Multi-page community prototype
+- Added device-local demo comments, save-post controls, and report/flag interactions with explicit prototype limitations
+- Added an open-first feed sort option
+- Fixed multi-page city selection and interaction selectors; JavaScript syntax validated
 - Reworked the single-page feed into a dedicated homepage and separate neighbourhood feed, explore, events, alerts, about, guidelines and privacy pages
 - Added a shared responsive design system, mobile navigation, consistent header/footer and accessible focus states
 - Added searchable/filterable sample feed, area discovery, sample events/alerts and a local-only demo post flow
